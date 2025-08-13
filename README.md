@@ -31,42 +31,6 @@ This library solves those problems with a **5-minute setup** that works immediat
 - ✅ **Resolution workflow** - from detection to fix
 - ✅ **Knowledge base** - track solutions for recurring issues
 
-## 🚀 Quick Start
-
-### 1. Deploy the Package
-```bash
-sf package install --package 04t... --target-org your-org
-```
-
-### 2. Use Immediately
-```apex
-// Log any error with one line
-ErrorLogger.logError('Apex Exception', 'MyClass.myMethod', ex, 'Processing user data');
-```
-
-### 3. View Results
-Navigate to the **Error Logs** tab to see captured errors.
-
-## 📋 Installation Options
-
-### Option 1: Managed Package (Recommended)
-```bash
-sf package install --package 04t5Y0000015pGtQAI
-```
-
-### Option 2: Source Code Deployment
-1. Clone this repository
-2. Deploy to your org:
-```bash
-sf project deploy start --source-dir force-app --target-org your-org
-```
-
-### Option 3: Scratch Org for Testing
-```bash
-sf org create scratch --definition-file config/project-scratch-def.json
-sf project deploy start --source-dir force-app
-```
-
 ## 🏗️ Architecture
 
 ```
