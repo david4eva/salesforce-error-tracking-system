@@ -122,14 +122,142 @@ public class AccountService {
 ```
 
 ### Flow Error Handling
-Add the **Log Error** Flow element to any Flow to capture failures:
+# Error Logging Sub-Flow
+
+## Overview
+This sub-flow creates error log records when placed in fault paths of parent flows. It accepts parameters to populate a custom Error Log object with comprehensive error tracking information.
+
+## Sub-Flow Configuration
+
+### Input Variables
+Create the following input variables in your sub-flow:
+
+| Variable Name | Data Type | Required | Description |
+|---------------|-----------|----------|-------------|
+| `varErrorType` | Text | Yes | Category of error (Apex, Flow, LWC, Integration) |
+| `varErrorSource` | Text | Yes | Specific source (Class, Trigger, Flow, etc.) |
+| `varErrorMessage` | Text | Yes | The actual error message |
+| `varErrorDetails` | Text | No | Stack trace and technical details |
+| `varContext` | Text | No | Additional context about what was happening |
+| `varAffectedUserId` | Text | No | User ID who experienced the error |
+| `varBusinessImpact` | Text | No | Severity level (Critical, High, Medium, Low) |
+| `varEnvironment` | Text | No | Environment where error occurred |
+| `varAPIEndpoint` | Text | No | For integration errors |
+| `varExternalSystem` | Text | No | Name of external system involved |
+| `varObjectType` | Text | No | Salesforce object being processed |
+| `varRecordId` | Text | No | Specific record that caused the error |
+
+### Sub-Flow Elements
+
+#### 1. Create Error Hash Formula
 ```
-Element: Log Error (Invocable Action)
-Error Type: Flow Error
-Source: [Flow API Name]
-Message: {!$Flow.FaultMessage}
-Context: Record ID {!recordId}
+Element Type: Assignment
+Variable: varErrorHash
+Value: LEFT(BLANKVALUE({!varErrorMessage}, '') + BLANKVALUE({!varErrorSource}, ''), 255)
 ```
+
+#### 2. Query Existing Error
+```
+Element Type: Get Records
+Object: Error_Log__c
+Conditions: Error_Hash__c = {!varErrorHash}
+How Many: First record only
+Store in: varExistingError
+```
+
+#### 3. Decision: Error Exists?
+```
+Element Type: Decision
+Outcome 1: Error Exists
+  Condition: {!varExistingError} Is Null = False
+Outcome 2: New Error (Default)
+```
+
+#### 4A. Update Existing Error (Error Exists Path)
+```
+Element Type: Update Records
+Record: {!varExistingError}
+Fields to Update:
+  - Error_Count__c = {!varExistingError.Error_Count__c} + 1
+  - Last_Occurrence__c = {!$System.OriginDateTime}
+  - Error_Message__c = {!varErrorMessage}
+  - Error_Details__c = {!varErrorDetails}
+  - Context__c = {!varContext}
+```
+
+#### 4B. Create New Error Record
+```
+Element Type: Create Records
+Object: Error_Log__c
+Fields:
+  - Error_Type__c = {!varErrorType}
+  - Error_Source__c = {!varErrorSource}
+  - Error_Message__c = {!varErrorMessage}
+  - Error_Details__c = {!varErrorDetails}
+  - Context__c = {!varContext}
+  - Error_Hash__c = {!varErrorHash}
+  - Error_Count__c = 1
+  - Affected_User__c = {!varAffectedUserId}
+  - Business_Impact__c = {!varBusinessImpact}
+  - Environment__c = {!varEnvironment}
+  - First_Occurrence__c = {!$System.OriginDateTime}
+  - Last_Occurrence__c = {!$System.OriginDateTime}
+  - API_Endpoint__c = {!varAPIEndpoint}
+  - External_System__c = {!varExternalSystem}
+  - Object_Type__c = {!varObjectType}
+  - Record_ID__c = {!varRecordId}
+Store in: varNewErrorRecord
+```
+
+## Usage in Parent Flow
+
+### In Fault Path
+Add this sub-flow element to your fault path:
+
+```
+Element Type: Sub-flow
+Sub-flow: Log_Error_Sub_Flow
+Input Variables:
+  - varErrorType = "Flow"
+  - varErrorSource = "Account_Update_Flow"
+  - varErrorMessage = {!$Flow.FaultMessage}
+  - varErrorDetails = "Flow API Name: " + {!$Flow.APIName} + "\nInterview GUID: " + {!$Flow.InterviewGuid}
+  - varContext = "Processing Account ID: " + {!recordId}
+  - varAffectedUserId = {!$User.Id}
+  - varBusinessImpact = "Medium"
+  - varEnvironment = "Production"
+  - varObjectType = "Account"
+  - varRecordId = {!recordId}
+```
+
+### Example Implementation
+```
+Parent Flow: Account_Update_Flow
+├── Get Account Record
+├── Update Account
+│   ├── Success Path → End
+│   └── Fault Path → Log Error Sub-Flow
+│       ├── Input: varErrorType = "Flow"
+│       ├── Input: varErrorSource = "Account_Update_Flow"
+│       ├── Input: varErrorMessage = {!$Flow.FaultMessage}
+│       └── Input: varContext = "Account ID: " + {!recordId}
+└── End (Fault)
+```
+
+## Benefits
+- **Centralized Error Logging**: One sub-flow handles all error logging
+- **Error Deduplication**: Groups similar errors using hash
+- **Occurrence Tracking**: Counts repeated errors
+- **Rich Context**: Captures comprehensive error information
+- **Reusable**: Can be used across multiple flows
+- **Maintainable**: Single point of maintenance for error logging logic
+
+## Best Practices
+1. Always include meaningful context in the `varContext` parameter
+2. Set appropriate `varBusinessImpact` based on the operation
+3. Include `varRecordId` when processing specific records
+4. Use consistent `varErrorSource` naming conventions
+5. Consider adding custom validation or notification logic in the sub-flow
 
 ### Batch Job Error Tracking
 ```apex
