@@ -282,35 +282,6 @@ upsert settings;
 - **Error Log User** - Read access to errors, create new errors
 - **Error Log Viewer** - Read-only access for reporting
 
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
-
-## 📈 Roadmap
-
-### v1.1 - Enhanced Analytics
-- [ ] Advanced error clustering and categorization
-- [ ] Automated error resolution suggestions
-
-### v1.2 - External Integrations
-- [ ] Slack/Teams notifications
-- [ ] Jira ticket creation
-- [ ] Email digest reports
-
-### v1.3 - Advanced Features
-- [ ] Custom error handling workflows
-- [ ] API for external monitoring tools
-
-## 🏷️ Keywords
-
-`salesforce` `apex` `error-tracking` `flow` `lwc` `integration` `monitoring` `debugging` `production-ready` `devops` `reliability`
-
----
-
-🐛 **Found a bug?** [Open an issue](https://github.com/yourusername/salesforce-error-tracker/issues)
-
-💡 **Have an idea?** [Start a discussion](https://github.com/yourusername/salesforce-error-tracker/discussions)
-
 ---
 
 *Built with ❤️ for the Salesforce community*
